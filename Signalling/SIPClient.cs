@@ -134,7 +134,7 @@ namespace SIPSorcery.SoftPhone
                 callURI = SIPURI.ParseSIPURIRelaxed(destination + "@" + m_sipServer);
                 sipUsername = m_sipUsername;
                 sipPassword = m_sipPassword;
-                fromHeader = (new SIPFromHeader(m_sipFromName, new SIPURI(m_sipUsername, m_sipServer, null), null)).ToString();
+                fromHeader = (new SIPFromHeader(m_sipFromName, new SIPURI(m_sipFromName, m_sipServer, null), null)).ToString();
             }
 
             StatusMessage(this, $"Starting call to {callURI}.");
@@ -150,13 +150,14 @@ namespace SIPSorcery.SoftPhone
                 StatusMessage(this, $"Call progressing, resolved {callURI} to {dstEndpoint}.");
                 System.Diagnostics.Debug.WriteLine($"DNS lookup result for {callURI}: {dstEndpoint}.");
                 SIPCallDescriptor callDescriptor = new SIPCallDescriptor(sipUsername, sipPassword, callURI.ToString(), fromHeader, null, null, null, null, SIPCallDirection.Out, _sdpMimeContentType, null, null);
-
+                callDescriptor.CallId = m_sipFromName;
                 MediaSession = CreateMediaSession();
 
                 m_userAgent.RemotePutOnHold += OnRemotePutOnHold;
                 m_userAgent.RemoteTookOffHold += OnRemoteTookOffHold;
                 Directory.CreateDirectory(SIPSoftPhoneState.OutputRecordingFolder);
-                _waveFile = new WaveFileWriter(Path.Combine(SIPSoftPhoneState.OutputRecordingFolder, "output.mp3"), _waveFormat);
+                string guid = Guid.NewGuid().ToString();
+                _waveFile = new WaveFileWriter(Path.Combine(SIPSoftPhoneState.OutputRecordingFolder, $"{guid}.mp3"), _waveFormat);
                 await m_userAgent.InitiateCallAsync(callDescriptor, MediaSession);
             }
         }
@@ -328,7 +329,7 @@ namespace SIPSorcery.SoftPhone
             var testPatternSource = new VideoTestPatternSource(new VideoEncoder());
 
             var voipMediaSession = new VoIPMediaSession(mediaEndPoints, testPatternSource);
-            voipMediaSession.OnRtpPacketReceived += OnRtpPacketReceived;
+           // voipMediaSession.OnRtpPacketReceived += OnRtpPacketReceived;
             return voipMediaSession;
         }
 
